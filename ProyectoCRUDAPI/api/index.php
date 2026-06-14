@@ -39,13 +39,38 @@ if ($isLogin) {
 // ============================================
 // VALIDAR TOKEN PARA EL RESTO DE ENDPOINTS
 // ============================================
+// Obtener token del header Authorization
+$token = '';
 $headers = getallheaders();
-$token = str_replace('Bearer ', '', $headers['Authorization'] ?? '');
+
+// Verificar diferentes formas de enviar el token
+if (isset($headers['Authorization'])) {
+    $auth_header = $headers['Authorization'];
+    if (strpos($auth_header, 'Bearer ') === 0) {
+        $token = substr($auth_header, 7); // Remover "Bearer "
+    } else {
+        $token = $auth_header;
+    }
+}
+
+// Si no viene en Authorization, intentar desde GET (para pruebas)
+if (empty($token) && isset($_GET['token'])) {
+    $token = $_GET['token'];
+}
+
+// Validar que hay un token
+if (empty($token)) {
+    http_response_code(401);
+    echo json_encode(['error' => 'Token no proporcionado. Use header: Authorization: Bearer <token>']);
+    exit;
+}
+
+// Validar el token
 $auth = new Auth();
 $payload = $auth->validarToken($token);
 if (!$payload) {
     http_response_code(401);
-    echo json_encode(['error' => 'Token inválido o no proporcionado']);
+    echo json_encode(['error' => 'Token inválido o expirado']);
     exit;
 }
 
@@ -126,4 +151,3 @@ switch ($method) {
         http_response_code(405);
         echo json_encode(['error' => 'Método no soportado']);
 }
-?>

@@ -8,12 +8,13 @@ use Firebase\JWT\Key;
 class Auth
 {
     private $db;
-    private $secret = JWT_SECRET;
+    private $secret;
 
     public function __construct()
     {
         $this->db = (new Database())->conexion;
-        $this->secret = defined('JWT_SECRET') ? JWT_SECRET : 'TuClaveSuperSecreta123!';
+        // Asignar el secret en el constructor, no en la propiedad
+        $this->secret = JWT_SECRET;
     }
 
     // Verificar credenciales y generar token
