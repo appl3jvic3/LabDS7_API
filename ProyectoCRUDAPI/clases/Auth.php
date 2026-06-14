@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/Database.php';
+require_once __DIR__ . '/../config/config.php';
 
 use Firebase\JWT\JWT;
 use Firebase\JWT\Key;
@@ -12,6 +13,7 @@ class Auth
     public function __construct()
     {
         $this->db = (new Database())->conexion;
+        $this->secret = defined('JWT_SECRET') ? JWT_SECRET : 'TuClaveSuperSecreta123!';
     }
 
     // Verificar credenciales y generar token
