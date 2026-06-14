@@ -1,5 +1,21 @@
 <?php
-header("Content-Type: application/json");
+// Suppress warnings before output
+error_reporting(E_ALL);
+ini_set('display_errors', 0);
+ini_set('log_errors', 1);
+
+// SET HEADERS FIRST (before any output)
+header('Content-Type: application/json');
+header('Access-Control-Allow-Origin: *');
+header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE');
+header('Access-Control-Allow-Headers: Content-Type, Authorization');
+
+// Handle OPTIONS request
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    http_response_code(200);
+    exit;
+}
+
 require_once __DIR__ . '/../config/config.php';
 require_once __DIR__ . '/../vendor/autoload.php';
 require_once __DIR__ . '/../clases/Database.php';
@@ -7,15 +23,14 @@ require_once __DIR__ . '/../clases/Producto.php';
 require_once __DIR__ . '/../clases/Auth.php';
 
 // Obtener método HTTP y acción
-$method = $_SERVER['REQUEST_METHOD'];
-$input = json_decode(file_get_contents("php://input"), true) ?? $_POST;
+$method = isset($_SERVER['REQUEST_METHOD']) ? $_SERVER['REQUEST_METHOD'] : 'GET';
+$input = json_decode(file_get_contents('php://input'), true) ?? $_POST;
 
 // ============================================
-// DETECTAR LOGIN POR RUTA (no por GET)
+// DETECTAR LOGIN POR RUTA
 // ============================================
-$request_uri = $_SERVER['REQUEST_URI'];
-// Eliminar parámetros de la URL si los hay (ej: ?buscar=...)
-$path = parse_url($request_uri, PHP_URL_PATH);
+$request_uri = isset($_SERVER['REQUEST_URI']) ? $_SERVER['REQUEST_URI'] : '';
+$path = parse_url($request_uri, PHP_URL_PATH) ?? '';
 $isLogin = (strpos($path, '/login') !== false);
 
 if ($isLogin) {
@@ -37,31 +52,68 @@ if ($isLogin) {
 }
 
 // ============================================
+// FUNCIÓN PARA OBTENER TOKEN (WAMP compatible)
+// ============================================
+function getToken()
+{
+    $token = '';
+
+    // Método 1: getallheaders() (Apache con mod_php)
+    if (function_exists('getallheaders')) {
+        $headers = getallheaders();
+        foreach ($headers as $key => $value) {
+            if (strtolower($key) === 'authorization') {
+                $auth_header = $value;
+                if (strpos($auth_header, 'Bearer ') === 0) {
+                    $token = substr($auth_header, 7);
+                } else {
+                    $token = $auth_header;
+                }
+                break;
+            }
+        }
+    }
+
+    // Método 2: $_SERVER['HTTP_AUTHORIZATION'] (WAMP en Apache)
+    if (empty($token) && isset($_SERVER['HTTP_AUTHORIZATION'])) {
+        $auth_header = $_SERVER['HTTP_AUTHORIZATION'];
+        if (strpos($auth_header, 'Bearer ') === 0) {
+            $token = substr($auth_header, 7);
+        } else {
+            $token = $auth_header;
+        }
+    }
+
+    // Método 3: $_SERVER['REDIRECT_HTTP_AUTHORIZATION'] (algunos Apache)
+    if (empty($token) && isset($_SERVER['REDIRECT_HTTP_AUTHORIZATION'])) {
+        $auth_header = $_SERVER['REDIRECT_HTTP_AUTHORIZATION'];
+        if (strpos($auth_header, 'Bearer ') === 0) {
+            $token = substr($auth_header, 7);
+        } else {
+            $token = $auth_header;
+        }
+    }
+
+    // Método 4: Parámetro GET (para debug/pruebas)
+    if (empty($token) && isset($_GET['token'])) {
+        $token = $_GET['token'];
+    }
+
+    return trim($token);
+}
+
+// ============================================
 // VALIDAR TOKEN PARA EL RESTO DE ENDPOINTS
 // ============================================
-// Obtener token del header Authorization
-$token = '';
-$headers = getallheaders();
-
-// Verificar diferentes formas de enviar el token
-if (isset($headers['Authorization'])) {
-    $auth_header = $headers['Authorization'];
-    if (strpos($auth_header, 'Bearer ') === 0) {
-        $token = substr($auth_header, 7); // Remover "Bearer "
-    } else {
-        $token = $auth_header;
-    }
-}
-
-// Si no viene en Authorization, intentar desde GET (para pruebas)
-if (empty($token) && isset($_GET['token'])) {
-    $token = $_GET['token'];
-}
+$token = getToken();
 
 // Validar que hay un token
 if (empty($token)) {
     http_response_code(401);
-    echo json_encode(['error' => 'Token no proporcionado. Use header: Authorization: Bearer <token>']);
+    echo json_encode([
+        'error' => 'Token no proporcionado',
+        'info' => 'Usa header: Authorization: Bearer <token>'
+    ]);
     exit;
 }
 
@@ -100,7 +152,7 @@ switch ($method) {
         if (Producto::validar($input, $errores)) {
             if ($producto->guardar($input)) {
                 http_response_code(201);
-                echo json_encode(['success' => true, 'message' => 'Producto guardado', 'accion' => 'Guardar']);
+                echo json_encode(['success' => true, 'message' => 'Producto guardado']);
             } else {
                 http_response_code(500);
                 echo json_encode(['success' => false, 'message' => 'Error al guardar']);
@@ -121,7 +173,7 @@ switch ($method) {
         $errores = [];
         if (Producto::validar($input, $errores)) {
             if ($producto->editar($id, $input)) {
-                echo json_encode(['success' => true, 'message' => 'Producto actualizado', 'accion' => 'Modificar']);
+                echo json_encode(['success' => true, 'message' => 'Producto actualizado']);
             } else {
                 http_response_code(500);
                 echo json_encode(['success' => false, 'message' => 'Error al actualizar']);

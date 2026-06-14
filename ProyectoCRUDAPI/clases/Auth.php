@@ -13,7 +13,6 @@ class Auth
     public function __construct()
     {
         $this->db = (new Database())->conexion;
-        // Asignar el secret en el constructor, no en la propiedad
         $this->secret = JWT_SECRET;
     }
 
