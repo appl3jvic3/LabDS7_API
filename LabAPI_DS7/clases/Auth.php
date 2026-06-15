@@ -1,6 +1,6 @@
 <?php
-require_once __DIR__ . '/Database.php';
-require_once __DIR__ . '/../config/config.php';
+require_once 'Database.php';
+require_once __DIR__ . '/../vendor/autoload.php';
 
 use Firebase\JWT\JWT;
 use Firebase\JWT\Key;
@@ -8,15 +8,14 @@ use Firebase\JWT\Key;
 class Auth
 {
     private $db;
-    private $secret;
+    private $secret = JWT_SECRET;
+    private $algo = JWT_ALGORITHM;
 
     public function __construct()
     {
         $this->db = (new Database())->conexion;
-        $this->secret = JWT_SECRET;
     }
 
-    // Verificar credenciales y generar token
     public function login($username, $password)
     {
         $stmt = $this->db->prepare("SELECT id, username, password_hash FROM usuarios WHERE username = ?");
@@ -26,21 +25,25 @@ class Auth
         if ($user && password_verify($password, $user['password_hash'])) {
             $payload = [
                 'iat' => time(),
-                'exp' => time() + 3600, // 1 hora
+                'exp' => time() + 3600,
                 'user_id' => $user['id'],
                 'username' => $user['username']
             ];
-            $token = JWT::encode($payload, $this->secret, 'HS256');
-            return ['success' => true, 'token' => $token];
+            try {
+                $token = JWT::encode($payload, $this->secret, $this->algo);
+                return ['success' => true, 'token' => $token];
+            } catch (Exception $e) {
+                // Error al generar el token (clave muy corta, etc.)
+                return ['success' => false, 'message' => 'Error interno: ' . $e->getMessage()];
+            }
         }
         return ['success' => false, 'message' => 'Credenciales incorrectas'];
     }
 
-    // Validar token (devuelve payload o false)
     public function validarToken($token)
     {
         try {
-            $decoded = JWT::decode($token, new Key($this->secret, 'HS256'));
+            $decoded = JWT::decode($token, new Key($this->secret, $this->algo));
             return (array) $decoded;
         } catch (Exception $e) {
             return false;

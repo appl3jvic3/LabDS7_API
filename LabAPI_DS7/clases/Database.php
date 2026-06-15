@@ -1,9 +1,9 @@
 <?php
 class Database {
-    private $host = 'localhost';
-    private $dbname = 'productosdb';
-    private $user = 'root';
-    private $pass = '';
+    private $host = DB_HOST;
+    private $dbname = DB_NAME;
+    private $user = DB_USER;
+    private $pass = DB_PASS;
     public $conexion;
 
     public function __construct() {
@@ -12,11 +12,11 @@ class Database {
             $this->conexion = new PDO($dsn, $this->user, $this->pass);
             $this->conexion->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         } catch (PDOException $e) {
-            die("Error de conexión: " . $e->getMessage());
+            die("Error BD: " . $e->getMessage());
         }
     }
 
-    // Métodos útiles: query, insert, update (puedes ampliar)
+    // Método para consultas seguras (reutilizable)
     public function query($sql, $params = []) {
         $stmt = $this->conexion->prepare($sql);
         $stmt->execute($params);

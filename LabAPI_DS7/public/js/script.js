@@ -1,10 +1,8 @@
-const API_BASE = '../../ProyectoCRUDAPI/api/index.php';
 let token = '';
 
 async function apiRequest(url, method, data = null) {
-    const fullUrl = url ? `${API_BASE}${url}` : API_BASE;
     const options = {
-        method,
+        method: method,
         headers: {
             'Authorization': 'Bearer ' + token,
             'Content-Type': 'application/json'
@@ -13,11 +11,11 @@ async function apiRequest(url, method, data = null) {
     if (data && (method === 'POST' || method === 'PUT')) {
         options.body = JSON.stringify(data);
     }
-    const response = await fetch(fullUrl, options);
+    const response = await fetch(url, options);
     const result = await response.json();
     if (!response.ok) {
         if (response.status === 401) {
-            Swal.fire('Sesión expirada', 'Vuelva a iniciar sesión', 'error');
+            Swal.fire('Sesión expirada', 'Vuelve a iniciar sesión', 'error');
             document.getElementById('loginSection').style.display = 'block';
             document.getElementById('productosSection').style.display = 'none';
             token = '';
@@ -27,6 +25,7 @@ async function apiRequest(url, method, data = null) {
     return result;
 }
 
+// Login
 document.getElementById('btnLogin').addEventListener('click', async () => {
     const username = document.getElementById('username').value;
     const password = document.getElementById('password').value;
@@ -35,7 +34,7 @@ document.getElementById('btnLogin').addEventListener('click', async () => {
         return;
     }
     try {
-        const response = await fetch(`${API_BASE}?login`, {
+        const response = await fetch('/PHP-Proyects/LabAPI_DS7/api/index.php/login', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ username, password })
@@ -43,7 +42,7 @@ document.getElementById('btnLogin').addEventListener('click', async () => {
         const data = await response.json();
         if (response.ok && data.token) {
             token = data.token;
-            document.getElementById('tokenInfo').innerHTML = '✅ Token obtenido correctamente.';
+            document.getElementById('tokenInfo').innerHTML = `✅ Token obtenido correctamente.`;
             document.getElementById('loginSection').style.display = 'none';
             document.getElementById('productosSection').style.display = 'block';
             listarProductos();
@@ -51,13 +50,14 @@ document.getElementById('btnLogin').addEventListener('click', async () => {
             Swal.fire('Error', data.error || 'Credenciales incorrectas', 'error');
         }
     } catch (err) {
-        Swal.fire('Error', 'No se pudo conectar al servidor. Verifique la ruta de la API.', 'error');
+        Swal.fire('Error', 'No se pudo conectar al servidor', 'error');
     }
 });
 
 async function listarProductos(buscar = '') {
     try {
-        let url = buscar ? `?buscar=${encodeURIComponent(buscar)}` : '';
+        let url = '/PHP-Proyects/LabAPI_DS7/api/index.php';
+        if (buscar) url += '?buscar=' + encodeURIComponent(buscar);
         const productos = await apiRequest(url, 'GET');
         const tbody = document.getElementById('productosTable');
         tbody.innerHTML = '';
@@ -68,7 +68,8 @@ async function listarProductos(buscar = '') {
             row.insertCell(2).innerText = prod.producto;
             row.insertCell(3).innerText = prod.precio;
             row.insertCell(4).innerText = prod.cantidad;
-            row.insertCell(5).innerHTML = `
+            const btnCell = row.insertCell(5);
+            btnCell.innerHTML = `
                 <button class="btn btn-sm btn-warning me-2" onclick="editarProducto(${prod.id})">Editar</button>
                 <button class="btn btn-sm btn-danger" onclick="eliminarProducto(${prod.id})">Eliminar</button>
             `;
@@ -90,9 +91,9 @@ document.getElementById('productoForm').addEventListener('submit', async (e) => 
     try {
         let result;
         if (id) {
-            result = await apiRequest('', 'PUT', { ...datos, id: parseInt(id) });
+            result = await apiRequest('/PHP-Proyects/LabAPI_DS7/api/index.php', 'PUT', { ...datos, id: parseInt(id) });
         } else {
-            result = await apiRequest('', 'POST', datos);
+            result = await apiRequest('/PHP-Proyects/LabAPI_DS7/api/index.php', 'POST', datos);
         }
         Swal.fire('Éxito', result.message, 'success');
         limpiarFormulario();
@@ -118,7 +119,7 @@ function limpiarFormulario() {
 
 async function editarProducto(id) {
     try {
-        const producto = await apiRequest(`?id=${id}`, 'GET');
+        const producto = await apiRequest(`/PHP-Proyects/LabAPI_DS7/api/index.php?id=${id}`, 'GET');
         document.getElementById('productoId').value = producto.id;
         document.getElementById('codigo').value = producto.codigo;
         document.getElementById('producto').value = producto.producto;
@@ -140,7 +141,7 @@ async function eliminarProducto(id) {
     });
     if (confirm.isConfirmed) {
         try {
-            await apiRequest(`?id=${id}`, 'DELETE');
+            await apiRequest(`/PHP-Proyects/LabAPI_DS7/api/index.php?id=${id}`, 'DELETE');
             Swal.fire('Eliminado', 'Producto eliminado correctamente', 'success');
             listarProductos();
         } catch (err) {
@@ -150,8 +151,6 @@ async function eliminarProducto(id) {
 }
 
 document.getElementById('btnBuscar').addEventListener('click', () => {
-    listarProductos(document.getElementById('searchInput').value);
-});
-document.getElementById('searchInput').addEventListener('keypress', (e) => {
-    if (e.key === 'Enter') listarProductos(e.target.value);
+    const busqueda = document.getElementById('searchInput').value;
+    listarProductos(busqueda);
 });
