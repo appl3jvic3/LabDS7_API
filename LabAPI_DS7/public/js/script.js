@@ -1,5 +1,11 @@
 let token = '';
 
+const API_BASE = (function() {
+    const origin = window.location.origin;
+    const basePath = window.location.pathname.replace(/\/public\/.*$/, '');
+    return origin + basePath + '/api/index.php';
+})();
+
 async function apiRequest(url, method, data = null) {
     const options = {
         method: method,
@@ -34,7 +40,7 @@ document.getElementById('btnLogin').addEventListener('click', async () => {
         return;
     }
     try {
-        const response = await fetch('/PHP-Proyects/LabDS7_API/LabAPI_DS7/api/index.php/login', {
+        const response = await fetch(`${API_BASE}/login`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ username, password })
@@ -56,7 +62,8 @@ document.getElementById('btnLogin').addEventListener('click', async () => {
 
 async function listarProductos(buscar = '') {
     try {
-        let url = '/PHP-Proyects/LabAPI_DS7/api/index.php';
+        let url = API_BASE;
+        
         if (buscar) url += '?buscar=' + encodeURIComponent(buscar);
         const productos = await apiRequest(url, 'GET');
         const tbody = document.getElementById('productosTable');
@@ -91,9 +98,9 @@ document.getElementById('productoForm').addEventListener('submit', async (e) => 
     try {
         let result;
         if (id) {
-            result = await apiRequest('/PHP-Proyects/LabAPI_DS7/api/index.php', 'PUT', { ...datos, id: parseInt(id) });
+            result = await apiRequest(API_BASE, 'PUT', { ...datos, id: parseInt(id) });
         } else {
-            result = await apiRequest('/PHP-Proyects/LabAPI_DS7/api/index.php', 'POST', datos);
+            result = await apiRequest(API_BASE, 'POST', datos);
         }
         Swal.fire('Éxito', result.message, 'success');
         limpiarFormulario();
@@ -119,7 +126,7 @@ function limpiarFormulario() {
 
 async function editarProducto(id) {
     try {
-        const producto = await apiRequest(`/PHP-Proyects/LabAPI_DS7/api/index.php?id=${id}`, 'GET');
+        const producto = await apiRequest(`${API_BASE}?id=${id}`, 'GET');
         document.getElementById('productoId').value = producto.id;
         document.getElementById('codigo').value = producto.codigo;
         document.getElementById('producto').value = producto.producto;
@@ -141,7 +148,7 @@ async function eliminarProducto(id) {
     });
     if (confirm.isConfirmed) {
         try {
-            await apiRequest(`/PHP-Proyects/LabAPI_DS7/api/index.php?id=${id}`, 'DELETE');
+            await apiRequest(`${API_BASE}?id=${id}`, 'DELETE');
             Swal.fire('Eliminado', 'Producto eliminado correctamente', 'success');
             listarProductos();
         } catch (err) {

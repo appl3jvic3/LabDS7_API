@@ -29,10 +29,15 @@ if (strpos($request_uri, '/login') !== false) {
     exit;
 }
 
-// Para cualquier otro endpoint, validar token
-$headers = getallheaders();
+$headers = function_exists('getallheaders') ? getallheaders() : [];
 $authHeader = $headers['Authorization'] ?? $headers['authorization'] ?? '';
-$token = str_replace('Bearer ', '', $authHeader);
+// Algunos servidores (Apache, FastCGI) no rellenan getallheaders() con Authorization.
+// Intentar también las variables de servidor comunes que contienen el header.
+if (empty($authHeader)) {
+    $authHeader = $_SERVER['HTTP_AUTHORIZATION'] ?? $_SERVER['REDIRECT_HTTP_AUTHORIZATION'] ?? '';
+}
+// Extraer token de 'Bearer <token>' de forma insensible a mayúsculas
+$token = preg_replace('/^\s*Bearer\s+/i', '', trim($authHeader));
 $auth = new Auth();
 $payload = $auth->validarToken($token);
 if (!$payload) {
