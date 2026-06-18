@@ -50,7 +50,10 @@ switch ($method) {
         if (isset($_GET['id'])) {
             $result = $producto->obtener($_GET['id']);
             if ($result) echo json_encode($result);
-            else { http_response_code(404); echo json_encode(['error' => 'Producto no encontrado']); }
+            else {
+                http_response_code(404);
+                echo json_encode(['error' => 'Producto no encontrado']);
+            }
         } else {
             $buscar = $_GET['buscar'] ?? '';
             $result = $producto->listar($buscar);
@@ -75,16 +78,16 @@ switch ($method) {
         break;
 
     case 'PUT':
-        parse_str(file_get_contents("php://input"), $putData);
-        $id = $putData['id'] ?? $input['id'] ?? null;
+        //parse_str(file_get_contents("php://input"), $putData);
+        $id = $input['id'] ?? null;
         if (!$id) {
             http_response_code(400);
             echo json_encode(['success' => false, 'message' => 'ID requerido']);
             break;
         }
         $errores = [];
-        if (Producto::validar($putData, $errores)) {
-            if ($producto->editar($id, $putData)) {
+        if (Producto::validar($input, $errores)) {  // ← Valida $input correcto
+            if ($producto->editar($id, $input)) {
                 echo json_encode(['success' => true, 'message' => 'Producto actualizado', 'accion' => 'Modificar']);
             } else {
                 http_response_code(500);
@@ -115,4 +118,3 @@ switch ($method) {
         http_response_code(405);
         echo json_encode(['error' => 'Método no soportado']);
 }
-?>
