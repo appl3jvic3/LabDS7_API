@@ -1,0 +1,99 @@
+/* estilo.css - Fondo oscuro, tonos azules y celestes */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    background: #0a0f1e;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    color: #e0e7ff;
+}
+
+/* Contenedor de tarjeta */
+.card {
+    background: #111827;
+    border-radius: 20px;
+    border: none;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+    overflow: hidden;
+}
+
+.card-header {
+    background: linear-gradient(135deg, #0284c7, #2563eb) !important;
+    border-bottom: none;
+}
+
+/* Botones */
+.btn-primary {
+    background: #0284c7;
+    border: none;
+}
+.btn-primary:hover {
+    background: #0ea5e9;
+}
+.btn-success {
+    background: #16a34a;
+}
+.btn-success:hover {
+    background: #22c55e;
+}
+.btn-warning {
+    background: #d97706;
+    color: white;
+}
+.btn-warning:hover {
+    background: #f59e0b;
+}
+.btn-danger {
+    background: #dc2626;
+}
+.btn-danger:hover {
+    background: #ef4444;
+}
+.btn-secondary {
+    background: #334155;
+}
+.btn-secondary:hover {
+    background: #475569;
+}
+
+/* Inputs y selects */
+.form-control, .form-select {
+    background: #1e293b;
+    border: 1px solid #334155;
+    color: #f1f5f9;
+}
+.form-control:focus {
+    background: #0f172a;
+    border-color: #38bdf8;
+    box-shadow: 0 0 0 0.2rem rgba(56, 189, 248, 0.25);
+}
+
+/* Tabla */
+.table {
+    color: #e2e8f0;
+    background: #111827;
+    border-radius: 12px;
+    overflow: hidden;
+}
+.table-dark {
+    background: #0f172a;
+}
+.table-striped > tbody > tr:nth-of-type(odd) > * {
+    background-color: rgba(56, 189, 248, 0.05);
+}
+.table-hover > tbody > tr:hover > * {
+    background-color: rgba(56, 189, 248, 0.1);
+}
+
+/* Bordes y sombras */
+.border {
+    border-color: #334155 !important;
+}
+.rounded {
+    border-radius: 12px !important;
+}
+
+/* Mensajes de SweetAlert2 se ven bien por defecto */
