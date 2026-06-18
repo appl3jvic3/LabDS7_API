@@ -34,7 +34,7 @@ document.getElementById('btnLogin').addEventListener('click', async () => {
         return;
     }
     try {
-        const response = await fetch('/PHP-Proyects/LabAPI_DS7/api/index.php/login', {
+        const response = await fetch('/PHP-Proyects/LabDS7_API/LabAPI_DS7/api/index.php/login', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ username, password })
